@@ -83,7 +83,8 @@ app.listen(PORT, () => {
 });
 
 
-
-
-// let result = generateRandomString(6, numsAndLetters);
-// urlDatabase.result = `http://localhost:8080/urls/${result}`;
+app.post('/urls/:shortURL/delete', (req, res) => {
+  // console.log(req.params.shortURL);
+  delete urlDatabase[req.params.shortURL];
+  res.redirect('/urls');
+});
