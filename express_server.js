@@ -95,14 +95,13 @@ app.post('/urls/:shortURL/delete', (req, res) => {
 //update URL resource in urlDatabase, when update button is pushed on urls_show,
 //use user input to update database with new longURL
 app.post('/urls/:shortURL', (req, res) => {
-
-  console.log("REQ.BODY",req.body);
-  res.write("hellooooo");
+  console.log("REQ.BODY",req.body.update);
   //get the current shortURL
   const shortURL = req.params.shortURL;
+  console.log("SHORTURL", shortURL);
   //use the shortURL to access urlDatabase, and redefine value of shortURL
   urlDatabase[shortURL] = req.body.update;
   //go back to updated list of URLS
-  res.redirect("/urls");
+  res.redirect('/urls');
 });
 
