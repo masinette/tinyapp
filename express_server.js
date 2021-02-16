@@ -9,6 +9,20 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+const numsAndLetters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+function generateRandomString(lengthOfString, characters) {
+  let randomAlphaNum = '';
+  let randomString = '';
+
+  for (let i = 0; i < lengthOfString; i++) {
+    randomAlphaNum = (characters[(Math.floor(Math.random() * characters.length))]);
+    randomString += randomAlphaNum;
+  };
+  // console.log(randomString);
+  return randomString;
+};
+
+
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -36,15 +50,30 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  const templateVars = { shortURL: req.params.shortURL, longURL: `http://localhost:8080/urls/${req.params.shortURL}` };
+  const shortURL = req.params.shortURL;
+  const longURL = urlDatabase[shortURL];
+  const templateVars = { shortURL: shortURL, longURL: longURL };
   res.render("urls_show", templateVars);
 });
 
 //match the POST request on urls_new and handle it,
 //log the POST request body to the console, and respond (with OK)
 app.post("/urls", (req, res) => {
-  console.log(req.body);
-  res.send("Ok");
+  console.log("REQ.BODY",req.body);
+  const shortURL = generateRandomString(6, numsAndLetters);
+  const longURL = req.body.longURL;
+  urlDatabase[shortURL] = longURL;
+  // res.send("Ok");
+  const templateVars = { shortURL: shortURL, longURL: longURL };
+  res.render("urls_show", templateVars);
+});
+
+//redirect to long url
+app.get("/u/:shortURL", (req, res) => {
+  //get shortURL from request parameters
+  const shortURL = req.params.shortURL;
+  const longURL = urlDatabase[shortURL];
+  res.redirect(longURL);
 });
 
 
@@ -54,18 +83,7 @@ app.listen(PORT, () => {
 });
 
 
-function generateRandomString(lengthOfString, characters) {
-  let randomAlphaNum = '';
-  let randomString = '';
 
-  for (let i = 0; i < lengthOfString; i++) {
-    randomAlphaNum = (characters[(Math.floor(Math.random() * characters.length))]);
-    randomString += randomAlphaNum;
-  };
-  // console.log(randomString);
-  return randomString;
-};
 
-const numsAndLetters = '0123456789abcdefghijklmnopqrstuvwxyz';
-
-generateRandomString(6, numsAndLetters);
+// let result = generateRandomString(6, numsAndLetters);
+// urlDatabase.result = `http://localhost:8080/urls/${result}`;
