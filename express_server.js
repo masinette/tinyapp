@@ -10,7 +10,7 @@ const urlDatabase = {
 };
 
 const bodyParser = require("body-parser");
-app.use(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.urlencoded({ extended: true }));
 
 app.get("/", (req, res) => {
   res.send("Hello!");
@@ -40,10 +40,32 @@ app.get("/urls/:shortURL", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
-
+//match the POST request on urls_new and handle it,
+//log the POST request body to the console, and respond (with OK)
+app.post("/urls", (req, res) => {
+  console.log(req.body);
+  res.send("Ok");
+});
 
 
 //have the server listen for incoming requests
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
+
+
+function generateRandomString(lengthOfString, characters) {
+  let randomAlphaNum = '';
+  let randomString = '';
+
+  for (let i = 0; i < lengthOfString; i++) {
+    randomAlphaNum = (characters[(Math.floor(Math.random() * characters.length))]);
+    randomString += randomAlphaNum;
+  };
+  // console.log(randomString);
+  return randomString;
+};
+
+const numsAndLetters = '0123456789abcdefghijklmnopqrstuvwxyz';
+
+generateRandomString(6, numsAndLetters);
