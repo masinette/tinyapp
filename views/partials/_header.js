@@ -9,6 +9,14 @@
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
       </div>
+
+      <div>
+      <form method="POST" action="">
+        <input type='text' name='username' style="margin: 1em"/>
+        <button>Submit</button>
+      </form>
+      </div>
+      
     </div>
   </nav>
 </header>
