@@ -59,7 +59,7 @@ app.get("/urls/:shortURL", (req, res) => {
 //match the POST request on urls_new and handle it,
 //log the POST request body to the console, and respond (with OK)
 app.post("/urls", (req, res) => {
-  console.log("REQ.BODY",req.body);
+  // console.log("REQ.BODY",req.body);
   const shortURL = generateRandomString(6, numsAndLetters);
   const longURL = req.body.longURL;
   urlDatabase[shortURL] = longURL;
@@ -82,9 +82,27 @@ app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
-
+//when user pushes delete button (wrapped in POST form), pass in the id(shortURL),
+//find that key name in the urlDatabase, and delete it. Afterward, redirect to urls
+//page with updated URL list
 app.post('/urls/:shortURL/delete', (req, res) => {
   // console.log(req.params.shortURL);
   delete urlDatabase[req.params.shortURL];
   res.redirect('/urls');
 });
+
+
+//update URL resource in urlDatabase, when update button is pushed on urls_show,
+//use user input to update database with new longURL
+app.post('/urls/:shortURL', (req, res) => {
+
+  console.log("REQ.BODY",req.body);
+  res.write("hellooooo");
+  //get the current shortURL
+  const shortURL = req.params.shortURL;
+  //use the shortURL to access urlDatabase, and redefine value of shortURL
+  urlDatabase[shortURL] = req.body.update;
+  //go back to updated list of URLS
+  res.redirect("/urls");
+});
+
