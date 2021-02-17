@@ -68,6 +68,18 @@ const findUserEmail = function(array, email) {
   return confirmedEmail;
 };
 
+const findUserID = function(array, email) {
+  let id;
+
+  for (let i = 0; i < array.length; i++) {
+    // console.log(userBody[i].email);
+    if (array[i].email === email) {
+      id = array[i].id;
+    }
+  }
+  return id;
+};
+
 //Update the _header partial to show the email value
 //from the user object instead of the username.
 
@@ -83,22 +95,22 @@ app.post('/login', (req, res) => {
   // console.log("USERS",userBody);
   console.log("--------------------------");
 
-  // res.cookie('email', email);
+  if (confirmedEmail) {
+    const id = findUserID(userBody, email);
+    res.cookie('user_id', id);
+  }
+  // res.cookie('user_id', email);
   res.redirect('/urls');
 });
 
-
-
 //USER LOGIN
 // app.post('/login', (req, res) => {
-
 //   const username = req.body.username;
 //   console.log("USERNAME",username);
 //   res.cookie('username', username);
 //   res.redirect('/urls');
 //   //loop through object, find email, assign related user id to cookie
 // });
-
 
 //USER LOGOUT
 app.post('/logout', (req, res) => {
@@ -110,6 +122,7 @@ app.get('/login', (req, res) => {
   //call templateVars as a parameter, because it is needed by the header
   const templateVars = { user: users[req.cookies["user_id"]] };
   res.render('urls_login', templateVars);
+  console.log(user);
 });
 
 
