@@ -16,9 +16,14 @@ const urlDatabase = {
 };
 
 const users = {
-  "testUserID": {
-    id: "testUserID",
+  "randomUserID": {
+    id: "randomUserID",
     email: "test@test.com",
+    password: "test"
+  },
+  "randomUserID2": {
+    id: "randomUserID2",
+    email: "test2@test.com",
     password: "test"
   }
 };
@@ -50,14 +55,49 @@ app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
+const findUserEmail = function(array, email) {
+  let confirmedEmail;
 
-//USER LOGIN
+  for (let i = 0; i < array.length; i++) {
+    // console.log(userBody[i].email);
+
+    if (array[i].email === email) {
+      confirmedEmail = array[i].email;
+    }
+  }
+  return confirmedEmail;
+};
+
+//Update the _header partial to show the email value
+//from the user object instead of the username.
+
 app.post('/login', (req, res) => {
-  const username = req.body.username;
-  // console.log("USERNAME",username);
-  res.cookie('username', username);
+  const email = req.body.email;
+  console.log(" email", email);
+  //need random id value from cookie to lookup email by user key
+  // console.log(users.randomUserID.email);
+
+  const userBody = Object.values(users);
+  let confirmedEmail = (findUserEmail(userBody, email));
+  console.log(confirmedEmail);
+  // console.log("USERS",userBody);
+  console.log("--------------------------");
+
+  // res.cookie('email', email);
   res.redirect('/urls');
 });
+
+
+
+//USER LOGIN
+// app.post('/login', (req, res) => {
+
+//   const username = req.body.username;
+//   console.log("USERNAME",username);
+//   res.cookie('username', username);
+//   res.redirect('/urls');
+//   //loop through object, find email, assign related user id to cookie
+// });
 
 
 //USER LOGOUT
@@ -68,31 +108,20 @@ app.post('/logout', (req, res) => {
 
 app.get('/register', (req, res) => {
   //call templateVars as a parameter, because it is needed by the header
-  const templateVars = { username: req.cookies["username"] };
+  const templateVars = { user: users[req.cookies["user_id"]] };
   res.render('urls_registration', templateVars);
 });
 
-/*
-- This endpoint should add a new user object to the global users object.
-  The user object should include the user's id, email and password.
-  To generate a random user ID, use the same function you use to generate
-  random IDs for URLs.
-- After adding the user, set a user_id cookie containing the user's newly
-  generated ID.
-- Redirect the user to the /urls page.
-- Test that the users object is properly being appended to. You can insert
-  a console.log or debugger prior to the redirect logic to inspect what data
-  the object contains.
-- Also test that the user_id cookie is being set correctly upon redirection.
-  You already did this sort of testing in the Cookies in Express activity.
-  Use the same approach here.
-*/
+
 app.post('/register', (req, res) => {
   // console.log("REQBODY",req.body);
   //get values for user id, email, password
   const email = req.body.email;
   const password = req.body.password;
   
+  // if (email === ""){
+  //   console.log("EMPTY");
+  // }
   //generate random id for user
   const id = generateRandomString(6, numsAndLetters);
 
@@ -107,21 +136,42 @@ app.post('/register', (req, res) => {
 });
 
 
-
+/*
+Lookup the user object in the users object using the user_id cookie value
+Pass this user object to your templates via templateVars.
+Update the _header partial to show the email value from the user object instead of the username.
+*/
 
 
 
 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase, username: req.cookies["username"] };
+  const templateVars = { urls: urlDatabase, user: users[req.cookies["user_id"]] };
   // console.log(req);
+
+  //get user_id cookie value
+  // console.log(req.cookies["user_id"]);
+  //lookup user in global users object with user_id value
+  // console.log(users[req.cookies["user_id"]]);
+
   //pass the templateVars object to the template called "urls_index"
   res.render("urls_index", templateVars);
 });
 
+
+
+
+//ORIGINAL RENDERING FOR INDEX
+// app.get("/urls", (req, res) => {
+//   const templateVars = { urls: urlDatabase, username: req.cookies["username"] };
+//   // console.log(req);
+//   //pass the templateVars object to the template called "urls_index"
+//   res.render("urls_index", templateVars);
+// });
+
 //render the form page
 app.get("/urls/new", (req, res) => {
-  const templateVars = { username: req.cookies["username"] };
+  const templateVars = { user: users[req.cookies["user_id"]] };
 
   res.render("urls_new", templateVars);
 });
@@ -129,7 +179,7 @@ app.get("/urls/new", (req, res) => {
 app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   const longURL = urlDatabase[shortURL];
-  const templateVars = { shortURL: shortURL, longURL: longURL, username: req.cookies["username"] };
+  const templateVars = { shortURL: shortURL, longURL: longURL, user: users[req.cookies["user_id"]] };
   res.render("urls_show", templateVars);
 });
 
@@ -141,7 +191,7 @@ app.post("/urls", (req, res) => {
   const longURL = req.body.longURL;
   urlDatabase[shortURL] = longURL;
   // res.send("Ok");
-  const templateVars = { shortURL: shortURL, longURL: longURL, username: req.cookies["username"] };
+  const templateVars = { shortURL: shortURL, longURL: longURL, user: users[req.cookies["user_id"]] };
   res.render("urls_show", templateVars);
 });
 
@@ -181,10 +231,5 @@ app.post('/urls/:shortURL', (req, res) => {
   //go back to updated list of URLS
   res.redirect('/urls');
 });
-
-// app.post('/urls/login', (req, res) => {
-//   console.log("USERNAME",req.body.username);
-//   // res.cookie('username');
-// });
 
 
