@@ -106,6 +106,14 @@ app.post('/logout', (req, res) => {
   res.redirect('/urls');
 });
 
+app.get('/login', (req, res) => {
+  //call templateVars as a parameter, because it is needed by the header
+  const templateVars = { user: users[req.cookies["user_id"]] };
+  res.render('urls_login', templateVars);
+});
+
+
+
 app.get('/register', (req, res) => {
   //call templateVars as a parameter, because it is needed by the header
   const templateVars = { user: users[req.cookies["user_id"]] };
