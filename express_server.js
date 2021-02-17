@@ -50,6 +50,12 @@ app.post('/login', (req, res) => {
 });
 
 
+//USER LOGOUT
+app.post('/logout', (req, res) => {
+  res.clearCookie('username');
+  res.redirect('/urls');
+});
+
 
 
 
