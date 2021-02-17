@@ -73,7 +73,7 @@ const findUserEmail = function(array, email) {
 
 app.post('/login', (req, res) => {
   const email = req.body.email;
-  console.log(" email", email);
+  // console.log(" email", email);
   //need random id value from cookie to lookup email by user key
   // console.log(users.randomUserID.email);
 
@@ -119,15 +119,39 @@ app.post('/register', (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
   
-  // if (email === ""){
-  //   console.log("EMPTY");
-  // }
+  // console.log(res);
+  if (email === "" || password === "") {
+    // console.log("EMPTY");
+    // console.log(res.statusCode);
+    res.status(400);
+    // console.log(res.statusCode);
+    res.send("Error: email/password can't be blank");
+  }
+
+  //FINDUSEREMAIL TAKES IN AN ARRAY
+  // console.log(email);
+  const userBody = Object.values(users);
+  // console.log(findUserEmail(userBody, email));
+  if (email === findUserEmail(userBody,email)) {
+    res.status(400);
+    res.send("Error: email is taken");
+  }
+
+
+
+
+
+
+
+
+
+
   //generate random id for user
   const id = generateRandomString(6, numsAndLetters);
 
   //add user object to global 'user' object
   users[id] = {id, email, password};
-  console.log(users);
+  // console.log(users);
 
   //set a user_id cookie with the randomly generated user id
   res.cookie("user_id", id);
