@@ -9,11 +9,22 @@ app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+// "DATABASES"
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
 
+const users = {
+  "testUserID": {
+    id: "testUserID",
+    email: "test@test.com",
+    password: "test"
+  }
+};
+
+// --------------------------------------------------
+//generate random string for urlDatabase key names
 const numsAndLetters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 function generateRandomString(lengthOfString, characters) {
   let randomAlphaNum = '';
@@ -26,7 +37,6 @@ function generateRandomString(lengthOfString, characters) {
   // console.log(randomString);
   return randomString;
 };
-
 
 app.get("/", (req, res) => {
   res.send("Hello!");
@@ -55,6 +65,48 @@ app.post('/logout', (req, res) => {
   res.clearCookie('username');
   res.redirect('/urls');
 });
+
+app.get('/register', (req, res) => {
+  //call templateVars as a parameter, because it is needed by the header
+  const templateVars = { username: req.cookies["username"] };
+  res.render('urls_registration', templateVars);
+});
+
+/*
+- This endpoint should add a new user object to the global users object.
+  The user object should include the user's id, email and password.
+  To generate a random user ID, use the same function you use to generate
+  random IDs for URLs.
+- After adding the user, set a user_id cookie containing the user's newly
+  generated ID.
+- Redirect the user to the /urls page.
+- Test that the users object is properly being appended to. You can insert
+  a console.log or debugger prior to the redirect logic to inspect what data
+  the object contains.
+- Also test that the user_id cookie is being set correctly upon redirection.
+  You already did this sort of testing in the Cookies in Express activity.
+  Use the same approach here.
+*/
+app.post('/register', (req, res) => {
+  // console.log("REQBODY",req.body);
+  //get values for user id, email, password
+  const email = req.body.email;
+  const password = req.body.password;
+  
+  //generate random id for user
+  const id = generateRandomString(6, numsAndLetters);
+
+  //add user object to global 'user' object
+  users[id] = {id, email, password};
+  console.log(users);
+
+  //set a user_id cookie with the randomly generated user id
+  res.cookie("user_id", id);
+  //redirect to /urls page
+  res.redirect('/urls');
+});
+
+
 
 
 
@@ -117,15 +169,6 @@ app.post('/urls/:shortURL/delete', (req, res) => {
 });
 
 
-// app.post('/urls/login', (req, res) => {
-//   const username = req.body.username;
-//   console.log(username);
-//   res.cookie('username', username);
-//   res.redirect('/urls');
-// });
-
-
-
 //update URL resource in urlDatabase, when update button is pushed on urls_show,
 //use user input to update database with new longURL
 app.post('/urls/:shortURL', (req, res) => {
@@ -143,3 +186,5 @@ app.post('/urls/:shortURL', (req, res) => {
 //   console.log("USERNAME",req.body.username);
 //   // res.cookie('username');
 // });
+
+
