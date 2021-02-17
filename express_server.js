@@ -1,6 +1,8 @@
 const express = require("express");
+const cookieParser = require('cookie-parser');
 const app = express();
 const PORT = 8080; // default port 8080
+
 
 app.set("view engine", "ejs");
 
@@ -37,6 +39,7 @@ app.get("/urls.json", (req, res) => {
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
+
 
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase };
@@ -92,19 +95,29 @@ app.post('/urls/:shortURL/delete', (req, res) => {
 });
 
 
+app.post('/urls/login', (req, res) => {
+  const username = req.body.username;
+  console.log(username);
+  res.cookie('username', username);
+  res.redirect('/urls');
+});
+
+
+
 //update URL resource in urlDatabase, when update button is pushed on urls_show,
 //use user input to update database with new longURL
 app.post('/urls/:shortURL', (req, res) => {
   console.log("REQ.BODY",req.body.update);
   //get the current shortURL
   const shortURL = req.params.shortURL;
-  console.log("SHORTURL", shortURL);
+  // console.log("SHORTURL", shortURL);
   //use the shortURL to access urlDatabase, and redefine value of shortURL
   urlDatabase[shortURL] = req.body.update;
   //go back to updated list of URLS
   res.redirect('/urls');
 });
 
-app.post('/urls/login', (req, res) => {
-
-});
+// app.post('/urls/login', (req, res) => {
+//   console.log("USERNAME",req.body.username);
+//   // res.cookie('username');
+// });

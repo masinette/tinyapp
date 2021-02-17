@@ -11,12 +11,12 @@
       </div>
 
       <div>
-      <form method="POST" action="">
+      <form method="POST" action="/urls/login">
         <input type='text' name='username' style="margin: 1em"/>
         <button>Submit</button>
       </form>
       </div>
-      
+
     </div>
   </nav>
 </header>
