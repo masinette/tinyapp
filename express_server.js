@@ -93,13 +93,11 @@ const findUserID = function(array, email) {
   return id;
 };
 
-//Update the _header partial to show the email value
-//from the user object instead of the username.
 
 app.post('/login', (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-  console.log(req.body);
+  // console.log(req.body);
   // console.log(" email", email);
   //need random id value from cookie to lookup email by user key
   // console.log(users.randomUserID.email);
@@ -129,24 +127,10 @@ app.post('/login', (req, res) => {
     res.send("Error 403: email is not registered");
   }
 
+  // res.cookie("user_id", id);
 
-   
-
-
-
-
-  // res.cookie('user_id', email);
   res.redirect('/urls');
 });
-
-//USER LOGIN
-// app.post('/login', (req, res) => {
-//   const username = req.body.username;
-//   console.log("USERNAME",username);
-//   res.cookie('username', username);
-//   res.redirect('/urls');
-//   //loop through object, find email, assign related user id to cookie
-// });
 
 //USER LOGOUT
 app.post('/logout', (req, res) => {
@@ -158,7 +142,6 @@ app.get('/login', (req, res) => {
   //call templateVars as a parameter, because it is needed by the header
   const templateVars = { user: users[req.cookies["user_id"]] };
   res.render('urls_login', templateVars);
-  console.log(user);
 });
 
 
@@ -193,16 +176,6 @@ app.post('/register', (req, res) => {
     res.status(400);
     res.send("Error: email is taken");
   }
-
-
-
-
-
-
-
-
-
-
   //generate random id for user
   const id = generateRandomString(6, numsAndLetters);
 
@@ -240,21 +213,18 @@ app.get("/urls", (req, res) => {
 });
 
 
-
-
-//ORIGINAL RENDERING FOR INDEX
-// app.get("/urls", (req, res) => {
-//   const templateVars = { urls: urlDatabase, username: req.cookies["username"] };
-//   // console.log(req);
-//   //pass the templateVars object to the template called "urls_index"
-//   res.render("urls_index", templateVars);
-// });
-
 //render the form page
 app.get("/urls/new", (req, res) => {
   const templateVars = { user: users[req.cookies["user_id"]] };
 
-  res.render("urls_new", templateVars);
+  //If someone is not logged in when trying to access /urls/new,
+  //redirect them to the login page.
+  if (req.cookies["user_id"]) {
+    res.render("urls_new", templateVars);
+  } else {
+    res.redirect("/login");
+  }
+
 });
 
 app.get("/urls/:shortURL", (req, res) => {
