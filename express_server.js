@@ -12,20 +12,13 @@ app.use(cookieParser());
 // "DATABASES"
 const urlDatabase = {
 
-  "b2xVn2": { longURL: "http://www.lighthouselabs.ca", userID: "randomUserID2" },
+  "b2xVn2": { longURL: "http://www.lighthouselabs.ca", userID: "randomUserID1" },
   "9sm5xK": { longURL: "http://www.google.com", userID: "randomUserID2" }
 };
 
-// const urlDatabase = {
-
-//   b2xVn2: "http://www.lighthouselabs.ca",
-//   "9sm5xK": "http://www.google.com"
-
-// };
-
 const users = {
-  "randomUserID": {
-    id: "randomUserID",
+  "randomUserID1": {
+    id: "randomUserID1",
     email: "test@test.com",
     password: "test"
   },
@@ -100,6 +93,22 @@ const findUserID = function(array, email) {
   }
   return id;
 };
+
+const urlsForUser = function(database, id) {
+  const userURLDatabase = {};
+  //loop through urlDatabase
+  for (let key in database) {
+    //target entries by user id
+    if (database[key].userID === id) {
+      // assign user specific objects to new object database
+      userURLDatabase[key] = database[key];
+      // console.log(userURLDatabase);
+    }
+  }
+  //return database
+  return userURLDatabase;
+};
+// console.log(urlsForUser(urlDatabase, "randomUserID1"));
 
 
 app.post('/login', (req, res) => {
@@ -204,16 +213,20 @@ Pass this user object to your templates via templateVars.
 Update the _header partial to show the email value from the user object instead of the username.
 */
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase, user: users[req.cookies["user_id"]] };
+  const userId = req.cookies["user_id"];
+  const userDatabase = urlsForUser(urlDatabase, userId);
+  //only pass user specific database to template
+  const templateVars = { urls: userDatabase, user: users[req.cookies["user_id"]] };
   // console.log(req);
+  
 
-  //get user_id cookie value
-  // console.log(req.cookies["user_id"]);
-  //lookup user in global users object with user_id value
-  // console.log(users[req.cookies["user_id"]]);
+  if (req.cookies["user_id"]) {
+    res.render("urls_index", templateVars);
+  } else {
+    res.send("Please register (or login) first");
+  }
 
   //pass the templateVars object to the template called "urls_index"
-  res.render("urls_index", templateVars);
 });
 
 
@@ -245,14 +258,9 @@ app.post("/urls", (req, res) => {
   const shortURL = generateRandomString(6, numsAndLetters);
   // const longURL = req.body.longURL;
   urlDatabase[shortURL] = { longURL: req.body.longURL, userID: req.cookies["user_id"] };
+
   const longURL = urlDatabase[shortURL].longURL;
-  
-  
-  
-  console.log("SHORTURL", shortURL);
-  
-  
-  
+    
   const templateVars = { urls: urlDatabase, shortURL: shortURL, longURL: longURL, user: users[req.cookies["user_id"]] };
   // urlDatabase[shortURL] = longURL;
   // res.send("Ok");
