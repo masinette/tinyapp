@@ -131,10 +131,10 @@ app.post('/login', (req, res) => {
   const userBody = Object.values(users);
   let confirmedEmail = (findUserEmail(userBody, email));
   let confirmedPassword = (findUserPassword(userBody, email));
-  console.log(confirmedEmail);
-  console.log(confirmedPassword);
+  // console.log(confirmedEmail);
+  // console.log(confirmedPassword);
   // console.log("USERS",userBody);
-  console.log("--------------------------");
+  // console.log("--------------------------");
 
   if (confirmedEmail) {
     if (confirmedPassword === password) {
@@ -228,6 +228,7 @@ app.get("/urls", (req, res) => {
   const templateVars = { urls: userDatabase, user: users[req.cookies["user_id"]] };
   // console.log(req);
 
+  //if use is logged in , show the index page
   if (req.cookies["user_id"]) {
     res.render("urls_index", templateVars);
   } else {
@@ -307,8 +308,17 @@ app.listen(PORT, () => {
 //find that key name in the urlDatabase, and delete it. Afterward, redirect to urls
 //page with updated URL list
 app.post('/urls/:shortURL/delete', (req, res) => {
-  // console.log(req.params.shortURL);
-  delete urlDatabase[req.params.shortURL];
+  const shortURL = req.params.shortURL;
+
+  console.log(urlDatabase[shortURL].userID);
+  //only delete if owner is logged in, and id matches url
+  if ((req.cookies["user_id"]) && (req.cookies["user_id"] === urlDatabase[shortURL].userID)) {
+    delete urlDatabase[req.params.shortURL];
+    
+  } else {
+    res.send("Please register (or login) first");
+  }
+
   res.redirect('/urls');
 });
 
@@ -324,7 +334,14 @@ app.post('/urls/:shortURL', (req, res) => {
   // console.log(longURL);
   // console.log("SHORTURL", shortURL);
   //use the shortURL to access urlDatabase, and redefine value of shortURL
-  urlDatabase[shortURL].longURL = req.body.update;
+
+
+
+  if ((req.cookies["user_id"]) && (req.cookies["user_id"] === urlDatabase[shortURL].userID)) {
+    urlDatabase[shortURL].longURL = req.body.update;
+  } else {
+    res.send("Please register (or login) first");
+  }
   //go back to updated list of URLS
   res.redirect('/urls');
 });
