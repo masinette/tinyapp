@@ -56,7 +56,7 @@ app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
-const findUserEmail = function(array, email) {
+const findUserEmail = function (array, email) {
   let confirmedEmail;
 
   for (let i = 0; i < array.length; i++) {
@@ -69,7 +69,7 @@ const findUserEmail = function(array, email) {
   return confirmedEmail;
 };
 
-const findUserPassword = function(array, email) {
+const findUserPassword = function (array, email) {
   let confirmedPassword;
 
   for (let i = 0; i < array.length; i++) {
@@ -82,7 +82,7 @@ const findUserPassword = function(array, email) {
   return confirmedPassword;
 };
 
-const findUserID = function(array, email) {
+const findUserID = function (array, email) {
   let id;
 
   for (let i = 0; i < array.length; i++) {
@@ -94,7 +94,7 @@ const findUserID = function(array, email) {
   return id;
 };
 
-const urlsForUser = function(database, id) {
+const urlsForUser = function (database, id) {
   const userURLDatabase = {};
   //loop through urlDatabase
   for (let key in database) {
@@ -110,6 +110,15 @@ const urlsForUser = function(database, id) {
 };
 // console.log(urlsForUser(urlDatabase, "randomUserID1"));
 
+const IDMatch = function(database, id) {
+  let matchID;
+  for (let key in urlDatabase) {
+    if (urlDatabase[key].userID === id) {
+      matchID = urlDatabase[key].userID;
+    }
+  }
+  return matchID;
+};
 
 app.post('/login', (req, res) => {
   const email = req.body.email;
@@ -175,7 +184,7 @@ app.post('/register', (req, res) => {
   //get values for user id, email, password
   const email = req.body.email;
   const password = req.body.password;
-  
+
   // console.log(res);
   if (email === "" || password === "") {
     // console.log("EMPTY");
@@ -189,7 +198,7 @@ app.post('/register', (req, res) => {
   // console.log(email);
   const userBody = Object.values(users);
   // console.log(findUserEmail(userBody, email));
-  if (email === findUserEmail(userBody,email)) {
+  if (email === findUserEmail(userBody, email)) {
     res.status(400);
     res.send("Error: email is taken");
   }
@@ -197,7 +206,7 @@ app.post('/register', (req, res) => {
   const id = generateRandomString(6, numsAndLetters);
 
   //add user object to global 'user' object
-  users[id] = {id, email, password};
+  users[id] = { id, email, password };
   // console.log(users);
 
   //set a user_id cookie with the randomly generated user id
@@ -218,7 +227,6 @@ app.get("/urls", (req, res) => {
   //only pass user specific database to template
   const templateVars = { urls: userDatabase, user: users[req.cookies["user_id"]] };
   // console.log(req);
-  
 
   if (req.cookies["user_id"]) {
     res.render("urls_index", templateVars);
@@ -248,7 +256,20 @@ app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   const longURL = urlDatabase[shortURL].longURL;
   const templateVars = { shortURL: shortURL, longURL: urlDatabase[shortURL].longURL, user: users[req.cookies["user_id"]] };
-  res.render("urls_show", templateVars);
+  const id = req.cookies["user_id"];
+
+
+
+  // console.log(shortURL);
+
+  // console.log(urlDatabase[shortURL].userID);
+
+  // if (req.cookies["user_id"]) {
+  if (id && (urlDatabase[shortURL].userID === id)) {
+    res.render("urls_show", templateVars);
+  } else {
+    res.send("Please register (or login) to see your list");
+  }
 });
 
 //match the POST request on urls_new and handle it,
@@ -260,7 +281,7 @@ app.post("/urls", (req, res) => {
   urlDatabase[shortURL] = { longURL: req.body.longURL, userID: req.cookies["user_id"] };
 
   const longURL = urlDatabase[shortURL].longURL;
-    
+
   const templateVars = { urls: urlDatabase, shortURL: shortURL, longURL: longURL, user: users[req.cookies["user_id"]] };
   // urlDatabase[shortURL] = longURL;
   // res.send("Ok");
