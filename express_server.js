@@ -1,13 +1,23 @@
 const express = require("express");
-const cookieParser = require('cookie-parser');
+const cookieSession = require('cookie-session');
+// const cookieParser = require('cookie-parser');
 const app = express();
 const PORT = 8080; // default port 8080
 const bodyParser = require("body-parser");
 const bcrypt = require('bcrypt');
+const { getUserIdByEmail } = require('./helpers');
 
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(cookieParser());
+// app.use(cookieParser());
+
+
+app.use(cookieSession({
+  name: 'session',
+  keys: ['hbefv8g4t83btv', 'jkfbcibe8y35']
+}));
+
+
 
 // "DATABASES"
 const urlDatabase = {
@@ -28,6 +38,7 @@ const users = {
     hashedPassword: "$2b$10$3o4B8o7ykr1ChOWGWum/R.7E1p0qY4eV0bAFMiU6qXJ9dbLRFJO6e"
   }
 };
+
 
 // --------------------------------------------------
 //generate random string for urlDatabase key names
@@ -56,7 +67,7 @@ app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
-const findUserEmail = function (array, email) {
+const findUserEmail = function(array, email) {
   let confirmedEmail;
 
   for (let i = 0; i < array.length; i++) {
@@ -68,6 +79,9 @@ const findUserEmail = function (array, email) {
   }
   return confirmedEmail;
 };
+
+
+
 
 const findUserPassword = function (array, email) {
   let confirmedPassword;
@@ -126,6 +140,7 @@ app.post('/login', (req, res) => {
   // const hashedPassword = bcrypt.hashSync(password, 10);
   // console.log(req.body);
   // console.log(" email", email);
+  // console.log("USERS", users);
   //need random id value from cookie to lookup email by user key
   // console.log(users.randomUserID.email);
 
@@ -136,17 +151,19 @@ app.post('/login', (req, res) => {
   const userBody = Object.values(users);
   let confirmedEmail = (findUserEmail(userBody, email));
   // let confirmedPassword = (findUserPassword(userBody, email));
-  // console.log(confirmedEmail);
-  // console.log(confirmedPassword);
-  // console.log("USERS",userBody);
-  // console.log("--------------------------");
 
-  const id = findUserID(userBody, email);
+  console.log("--------------------------");
+
+  // const id = findUserID(userBody, email);
+  const id = getUserIdByEmail(users, email);
+
+
   if (confirmedEmail) {
     if (bcrypt.compareSync(password, users[id].hashedPassword)) {
       // if (confirmedPassword === password) {
       // if email and password match, set user id cookie to one in database
-      res.cookie('user_id', id);
+      // res.cookie('user_id', id);
+      req.session["user_id"] = id;
     } else {
       //if email matches but password doesnt, 403
       res.status(403).send("Error 403: password is incorrect");
@@ -156,20 +173,19 @@ app.post('/login', (req, res) => {
     res.status(403).send("Error 403: email is not registered");
   }
 
-  // res.cookie("user_id", id);
 
   res.redirect('/urls');
 });
 
 //USER LOGOUT
 app.post('/logout', (req, res) => {
-  res.clearCookie('user_id');
+  req.session["user_id"] = null;
   res.redirect('/urls');
 });
 
 app.get('/login', (req, res) => {
   //call templateVars as a parameter, because it is needed by the header
-  const templateVars = { user: users[req.cookies["user_id"]] };
+  const templateVars = { user: users[req.session["user_id"]] };
   res.render('urls_login', templateVars);
 });
 
@@ -177,7 +193,7 @@ app.get('/login', (req, res) => {
 
 app.get('/register', (req, res) => {
   //call templateVars as a parameter, because it is needed by the header
-  const templateVars = { user: users[req.cookies["user_id"]] };
+  const templateVars = { user: users[req.session["user_id"]] };
   res.render('urls_registration', templateVars);
 });
 
@@ -212,10 +228,11 @@ app.post('/register', (req, res) => {
 
   //add user object to global 'user' object
   users[id] = { id, email, hashedPassword };
-  console.log(users);
+  // console.log(users);
 
   //set a user_id cookie with the randomly generated user id
-  res.cookie("user_id", id);
+  req.session["user_id"] = id;
+  // res.cookie("user_id", id);
   //redirect to /urls page
   res.redirect('/urls');
 });
@@ -227,14 +244,14 @@ Pass this user object to your templates via templateVars.
 Update the _header partial to show the email value from the user object instead of the username.
 */
 app.get("/urls", (req, res) => {
-  const userId = req.cookies["user_id"];
+  const userId = req.session["user_id"];
   const userDatabase = urlsForUser(urlDatabase, userId);
   //only pass user specific database to template
-  const templateVars = { urls: userDatabase, user: users[req.cookies["user_id"]] };
+  const templateVars = { urls: userDatabase, user: users[req.session["user_id"]] };
   // console.log(req);
 
   //if use is logged in , show the index page
-  if (req.cookies["user_id"]) {
+  if (req.session["user_id"]) {
     res.render("urls_index", templateVars);
   } else {
     res.send("Please register (or login) first");
@@ -246,11 +263,11 @@ app.get("/urls", (req, res) => {
 
 //render the form page
 app.get("/urls/new", (req, res) => {
-  const templateVars = { user: users[req.cookies["user_id"]] };
+  const templateVars = { user: users[req.session["user_id"]] };
 
   //If someone is not logged in when trying to access /urls/new,
   //redirect them to the login page.
-  if (req.cookies["user_id"]) {
+  if (req.session["user_id"]) {
     res.render("urls_new", templateVars);
   } else {
     res.redirect("/login");
@@ -261,8 +278,8 @@ app.get("/urls/new", (req, res) => {
 app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   const longURL = urlDatabase[shortURL].longURL;
-  const templateVars = { shortURL: shortURL, longURL: urlDatabase[shortURL].longURL, user: users[req.cookies["user_id"]] };
-  const id = req.cookies["user_id"];
+  const templateVars = { shortURL: shortURL, longURL: urlDatabase[shortURL].longURL, user: users[req.session["user_id"]] };
+  const id = req.session["user_id"];
 
 
 
@@ -284,11 +301,11 @@ app.post("/urls", (req, res) => {
   // console.log("REQ.BODY",req.body);
   const shortURL = generateRandomString(6, numsAndLetters);
   // const longURL = req.body.longURL;
-  urlDatabase[shortURL] = { longURL: req.body.longURL, userID: req.cookies["user_id"] };
+  urlDatabase[shortURL] = { longURL: req.body.longURL, userID: req.session["user_id"] };
 
   const longURL = urlDatabase[shortURL].longURL;
 
-  const templateVars = { urls: urlDatabase, shortURL: shortURL, longURL: longURL, user: users[req.cookies["user_id"]] };
+  const templateVars = { urls: urlDatabase, shortURL: shortURL, longURL: longURL, user: users[req.session["user_id"]] };
   // urlDatabase[shortURL] = longURL;
   // res.send("Ok");
   res.render("urls_show", templateVars);
@@ -318,7 +335,7 @@ app.post('/urls/:shortURL/delete', (req, res) => {
   // console.log(urlDatabase[shortURL].userID);
 
   //only delete if owner is logged in, and id matches url
-  if ((req.cookies["user_id"]) && (req.cookies["user_id"] === urlDatabase[shortURL].userID)) {
+  if ((req.session["user_id"]) && (req.session["user_id"] === urlDatabase[shortURL].userID)) {
     delete urlDatabase[req.params.shortURL];
 
   } else {
@@ -343,7 +360,7 @@ app.post('/urls/:shortURL', (req, res) => {
 
 
   //only logged in, correct user can make edits to urls
-  if ((req.cookies["user_id"]) && (req.cookies["user_id"] === urlDatabase[shortURL].userID)) {
+  if ((req.session["user_id"]) && (req.session["user_id"] === urlDatabase[shortURL].userID)) {
     urlDatabase[shortURL].longURL = req.body.update;
   } else {
     res.send("Please register (or login) first");
@@ -351,42 +368,3 @@ app.post('/urls/:shortURL', (req, res) => {
   //go back to updated list of URLS
   res.redirect('/urls');
 });
-
-// app.post('/register', (req, res) => {
-//   // console.log("REQBODY",req.body);
-//   //get values for user id, email, password
-//   const email = req.body.email;
-//   const password = req.body.password;
-//   const hashedPassword = bcrypt.hashSync(password, 10);
-
-
-
-//   // console.log(res);
-//   if (email === "" || password === "") {
-//     // console.log("EMPTY");
-//     // console.log(res.statusCode);
-//     res.status(400);
-//     // console.log(res.statusCode);
-//     res.send("Error: email/password can't be blank");
-//   }
-
-//   //FINDUSEREMAIL TAKES IN AN ARRAY
-//   // console.log(email);
-//   const userBody = Object.values(users);
-//   // console.log(findUserEmail(userBody, email));
-//   if (email === findUserEmail(userBody, email)) {
-//     res.status(400);
-//     res.send("Error: email is taken");
-//   }
-//   //generate random id for user
-//   const id = generateRandomString(6, numsAndLetters);
-
-//   //add user object to global 'user' object
-//   users[id] = { id, email, password };
-//   // console.log(users);
-
-//   //set a user_id cookie with the randomly generated user id
-//   res.cookie("user_id", id);
-//   //redirect to /urls page
-//   res.redirect('/urls');
-// });
