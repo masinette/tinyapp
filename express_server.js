@@ -310,7 +310,8 @@ app.listen(PORT, () => {
 app.post('/urls/:shortURL/delete', (req, res) => {
   const shortURL = req.params.shortURL;
 
-  console.log(urlDatabase[shortURL].userID);
+  // console.log(urlDatabase[shortURL].userID);
+
   //only delete if owner is logged in, and id matches url
   if ((req.cookies["user_id"]) && (req.cookies["user_id"] === urlDatabase[shortURL].userID)) {
     delete urlDatabase[req.params.shortURL];
@@ -336,7 +337,7 @@ app.post('/urls/:shortURL', (req, res) => {
   //use the shortURL to access urlDatabase, and redefine value of shortURL
 
 
-
+  //only logged in, correct user can make edits to urls
   if ((req.cookies["user_id"]) && (req.cookies["user_id"] === urlDatabase[shortURL].userID)) {
     urlDatabase[shortURL].longURL = req.body.update;
   } else {

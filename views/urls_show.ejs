@@ -12,7 +12,7 @@
   <div class="card text-center">
       <div class="card-header"></div>
       <div class="card-body">
-        
+
           <h5 class="card-title">TinyURL for: <%= longURL %></h5>
 
         <!-- <p class="card-text">Short URL: <a href="/u/<%= shortURL %>"><%= shortURL %></a></p> -->
@@ -23,7 +23,7 @@
     <h5>Edit</h5>
     <form method="POST" action="/urls/<%= shortURL %>">
       <input type='text' name='update' placeholder="updated longURL" style="margin: 1em"/>
-      <button>Update</button>
+      <button class="btn btn-outline-primary">Update</button>
     </form>
   <div class="card-footer text-muted"></div>
   </div>
