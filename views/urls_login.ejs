@@ -17,8 +17,10 @@
     <div class="card-footer text-muted"></div>
     <div>
       <form method="POST" action="/login">
-        <input type='text' name='email' placeholder='Email' style="margin: 1em"/>
-        <input type='text' name='password' placeholder='Password' style="margin: 1em"/>
+        <label for="email">Email:</label>
+        <input type='email' name='email' placeholder='Email' style="margin: 1em"/>
+        <label for="password">Password:</label>
+        <input type='password' name='password' placeholder='Password' style="margin: 1em"/>
         <button>Submit</button>
       </form>
     </div>

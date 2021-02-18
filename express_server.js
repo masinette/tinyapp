@@ -68,6 +68,19 @@ const findUserEmail = function(array, email) {
   return confirmedEmail;
 };
 
+const findUserPassword = function(array, email) {
+  let confirmedPassword;
+
+  for (let i = 0; i < array.length; i++) {
+    // console.log(userBody[i].email);
+
+    if (array[i].email === email) {
+      confirmedPassword = array[i].password;
+    }
+  }
+  return confirmedPassword;
+};
+
 const findUserID = function(array, email) {
   let id;
 
@@ -85,20 +98,43 @@ const findUserID = function(array, email) {
 
 app.post('/login', (req, res) => {
   const email = req.body.email;
+  const password = req.body.password;
+  console.log(req.body);
   // console.log(" email", email);
   //need random id value from cookie to lookup email by user key
   // console.log(users.randomUserID.email);
 
   const userBody = Object.values(users);
   let confirmedEmail = (findUserEmail(userBody, email));
+  let confirmedPassword = (findUserPassword(userBody, email));
   console.log(confirmedEmail);
+  console.log(confirmedPassword);
   // console.log("USERS",userBody);
   console.log("--------------------------");
 
   if (confirmedEmail) {
-    const id = findUserID(userBody, email);
-    res.cookie('user_id', id);
+    if (confirmedPassword === password) {
+      // if email and password match, set user id cookie to one in database
+      const id = findUserID(userBody, email);
+      res.cookie('user_id', id);
+    } else {
+      //if email matches but password doesnt, 403
+      res.status(403);
+      // console.log(res.statusCode);
+      res.send("Error 403: password is incorrect");
+    }
+    //if email cannot be found return response of 403 status code
+  } else {
+    res.status(403);
+    res.send("Error 403: email is not registered");
   }
+
+
+   
+
+
+
+
   // res.cookie('user_id', email);
   res.redirect('/urls');
 });
@@ -114,7 +150,7 @@ app.post('/login', (req, res) => {
 
 //USER LOGOUT
 app.post('/logout', (req, res) => {
-  res.clearCookie('username');
+  res.clearCookie('user_id');
   res.redirect('/urls');
 });
 
