@@ -11,9 +11,17 @@ app.use(cookieParser());
 
 // "DATABASES"
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+
+  "b2xVn2": { longURL: "http://www.lighthouselabs.ca", userID: "randomUserID2" },
+  "9sm5xK": { longURL: "http://www.google.com", userID: "randomUserID2" }
 };
+
+// const urlDatabase = {
+
+//   b2xVn2: "http://www.lighthouselabs.ca",
+//   "9sm5xK": "http://www.google.com"
+
+// };
 
 const users = {
   "randomUserID": {
@@ -195,10 +203,6 @@ Lookup the user object in the users object using the user_id cookie value
 Pass this user object to your templates via templateVars.
 Update the _header partial to show the email value from the user object instead of the username.
 */
-
-
-
-
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase, user: users[req.cookies["user_id"]] };
   // console.log(req);
@@ -229,8 +233,8 @@ app.get("/urls/new", (req, res) => {
 
 app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
-  const longURL = urlDatabase[shortURL];
-  const templateVars = { shortURL: shortURL, longURL: longURL, user: users[req.cookies["user_id"]] };
+  const longURL = urlDatabase[shortURL].longURL;
+  const templateVars = { shortURL: shortURL, longURL: urlDatabase[shortURL].longURL, user: users[req.cookies["user_id"]] };
   res.render("urls_show", templateVars);
 });
 
@@ -239,18 +243,28 @@ app.get("/urls/:shortURL", (req, res) => {
 app.post("/urls", (req, res) => {
   // console.log("REQ.BODY",req.body);
   const shortURL = generateRandomString(6, numsAndLetters);
-  const longURL = req.body.longURL;
-  urlDatabase[shortURL] = longURL;
+  // const longURL = req.body.longURL;
+  urlDatabase[shortURL] = { longURL: req.body.longURL, userID: req.cookies["user_id"] };
+  const longURL = urlDatabase[shortURL].longURL;
+  
+  
+  
+  console.log("SHORTURL", shortURL);
+  
+  
+  
+  const templateVars = { urls: urlDatabase, shortURL: shortURL, longURL: longURL, user: users[req.cookies["user_id"]] };
+  // urlDatabase[shortURL] = longURL;
   // res.send("Ok");
-  const templateVars = { shortURL: shortURL, longURL: longURL, user: users[req.cookies["user_id"]] };
   res.render("urls_show", templateVars);
 });
 
 //redirect to long url
 app.get("/u/:shortURL", (req, res) => {
   //get shortURL from request parameters
+  // const urls = Object.keys(urlDatabase);
   const shortURL = req.params.shortURL;
-  const longURL = urlDatabase[shortURL];
+  const longURL = urlDatabase[shortURL].longURL;
   res.redirect(longURL);
 });
 
@@ -273,12 +287,15 @@ app.post('/urls/:shortURL/delete', (req, res) => {
 //update URL resource in urlDatabase, when update button is pushed on urls_show,
 //use user input to update database with new longURL
 app.post('/urls/:shortURL', (req, res) => {
-  console.log("REQ.BODY",req.body.update);
+  // console.log("REQ.BODY",req.body.update);
   //get the current shortURL
   const shortURL = req.params.shortURL;
+  const longURL = urlDatabase[shortURL].longURL;
+  // console.log(shortURL);
+  // console.log(longURL);
   // console.log("SHORTURL", shortURL);
   //use the shortURL to access urlDatabase, and redefine value of shortURL
-  urlDatabase[shortURL] = req.body.update;
+  urlDatabase[shortURL].longURL = req.body.update;
   //go back to updated list of URLS
   res.redirect('/urls');
 });
