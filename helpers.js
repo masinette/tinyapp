@@ -10,20 +10,31 @@ const getUserIdByEmail = function(users, emailAccount) {
   return confirmedUser;
 };
 
-
-const users = {
-  "randomUserID1": {
-    id: "randomUserID1",
-    email: "test@test.com",
-    hashedPassword: "$2b$10$IvlaFivG77HAs8L6CUHb7.ta4Mzxyxg2F/U6uBOfQHZq5Q6xrIr7i"
-  },
-  "randomUserID2": {
-    id: "randomUserID2",
-    email: "test2@test.com",
-    hashedPassword: "$2b$10$3o4B8o7ykr1ChOWGWum/R.7E1p0qY4eV0bAFMiU6qXJ9dbLRFJO6e"
+const urlsForUser = function (database, id) {
+  const userURLDatabase = {};
+  for (let key in database) {
+    //target entries by user id
+    if (database[key].userID === id) {
+      // assign user specific objects to new object database
+      userURLDatabase[key] = database[key];
+    }
   }
+  //return database
+  return userURLDatabase;
 };
 
-console.log(getUserIdByEmail(users, "test@test.com"));
+const confirmUserEmail = function(users, emailAccount) {
+  let confirmedEmail;
 
-module.exports = { getUserIdByEmail };
+  for (let user in users) {
+    let usersEmail = users[user].email;
+
+    if (usersEmail === emailAccount) {
+      confirmedEmail = users[user].email;
+    }
+  }
+  return confirmedEmail;
+};
+
+
+module.exports = { getUserIdByEmail, urlsForUser, confirmUserEmail };
