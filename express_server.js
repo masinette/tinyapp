@@ -3,9 +3,9 @@ const cookieParser = require('cookie-parser');
 const app = express();
 const PORT = 8080; // default port 8080
 const bodyParser = require("body-parser");
+const bcrypt = require('bcrypt');
 
 app.set("view engine", "ejs");
-
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 
@@ -20,12 +20,12 @@ const users = {
   "randomUserID1": {
     id: "randomUserID1",
     email: "test@test.com",
-    password: "test"
+    hashedPassword: "$2b$10$IvlaFivG77HAs8L6CUHb7.ta4Mzxyxg2F/U6uBOfQHZq5Q6xrIr7i"
   },
   "randomUserID2": {
     id: "randomUserID2",
     email: "test2@test.com",
-    password: "test"
+    hashedPassword: "$2b$10$3o4B8o7ykr1ChOWGWum/R.7E1p0qY4eV0bAFMiU6qXJ9dbLRFJO6e"
   }
 };
 
@@ -110,7 +110,7 @@ const urlsForUser = function (database, id) {
 };
 // console.log(urlsForUser(urlDatabase, "randomUserID1"));
 
-const IDMatch = function(database, id) {
+const IDMatch = function (database, id) {
   let matchID;
   for (let key in urlDatabase) {
     if (urlDatabase[key].userID === id) {
@@ -123,34 +123,37 @@ const IDMatch = function(database, id) {
 app.post('/login', (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
+  // const hashedPassword = bcrypt.hashSync(password, 10);
   // console.log(req.body);
   // console.log(" email", email);
   //need random id value from cookie to lookup email by user key
   // console.log(users.randomUserID.email);
 
+  // console.log(email,"HASHEDPW", hashedPassword);
+  // console.log(bcrypt.hashSync("test", 10));
+  // console.log(password);
+
   const userBody = Object.values(users);
   let confirmedEmail = (findUserEmail(userBody, email));
-  let confirmedPassword = (findUserPassword(userBody, email));
+  // let confirmedPassword = (findUserPassword(userBody, email));
   // console.log(confirmedEmail);
   // console.log(confirmedPassword);
   // console.log("USERS",userBody);
   // console.log("--------------------------");
 
+  const id = findUserID(userBody, email);
   if (confirmedEmail) {
-    if (confirmedPassword === password) {
+    if (bcrypt.compareSync(password, users[id].hashedPassword)) {
+      // if (confirmedPassword === password) {
       // if email and password match, set user id cookie to one in database
-      const id = findUserID(userBody, email);
       res.cookie('user_id', id);
     } else {
       //if email matches but password doesnt, 403
-      res.status(403);
-      // console.log(res.statusCode);
-      res.send("Error 403: password is incorrect");
+      res.status(403).send("Error 403: password is incorrect");
     }
     //if email cannot be found return response of 403 status code
   } else {
-    res.status(403);
-    res.send("Error 403: email is not registered");
+    res.status(403).send("Error 403: email is not registered");
   }
 
   // res.cookie("user_id", id);
@@ -184,6 +187,8 @@ app.post('/register', (req, res) => {
   //get values for user id, email, password
   const email = req.body.email;
   const password = req.body.password;
+  const hashedPassword = bcrypt.hashSync(password, 10);
+
 
   // console.log(res);
   if (email === "" || password === "") {
@@ -206,8 +211,8 @@ app.post('/register', (req, res) => {
   const id = generateRandomString(6, numsAndLetters);
 
   //add user object to global 'user' object
-  users[id] = { id, email, password };
-  // console.log(users);
+  users[id] = { id, email, hashedPassword };
+  console.log(users);
 
   //set a user_id cookie with the randomly generated user id
   res.cookie("user_id", id);
@@ -315,7 +320,7 @@ app.post('/urls/:shortURL/delete', (req, res) => {
   //only delete if owner is logged in, and id matches url
   if ((req.cookies["user_id"]) && (req.cookies["user_id"] === urlDatabase[shortURL].userID)) {
     delete urlDatabase[req.params.shortURL];
-    
+
   } else {
     res.send("Please register (or login) first");
   }
@@ -347,4 +352,41 @@ app.post('/urls/:shortURL', (req, res) => {
   res.redirect('/urls');
 });
 
+// app.post('/register', (req, res) => {
+//   // console.log("REQBODY",req.body);
+//   //get values for user id, email, password
+//   const email = req.body.email;
+//   const password = req.body.password;
+//   const hashedPassword = bcrypt.hashSync(password, 10);
 
+
+
+//   // console.log(res);
+//   if (email === "" || password === "") {
+//     // console.log("EMPTY");
+//     // console.log(res.statusCode);
+//     res.status(400);
+//     // console.log(res.statusCode);
+//     res.send("Error: email/password can't be blank");
+//   }
+
+//   //FINDUSEREMAIL TAKES IN AN ARRAY
+//   // console.log(email);
+//   const userBody = Object.values(users);
+//   // console.log(findUserEmail(userBody, email));
+//   if (email === findUserEmail(userBody, email)) {
+//     res.status(400);
+//     res.send("Error: email is taken");
+//   }
+//   //generate random id for user
+//   const id = generateRandomString(6, numsAndLetters);
+
+//   //add user object to global 'user' object
+//   users[id] = { id, email, password };
+//   // console.log(users);
+
+//   //set a user_id cookie with the randomly generated user id
+//   res.cookie("user_id", id);
+//   //redirect to /urls page
+//   res.redirect('/urls');
+// });
