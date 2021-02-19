@@ -68,9 +68,9 @@ app.post('/login', (req, res) => {
   res.redirect('/urls');
 });
 app.post('/logout', (req, res) => {
-  //USER LOGOUT, then redirect to login
+  //USER LOGOUT, then redirect to urls
   req.session["user_id"] = null;
-  res.redirect('/login');
+  res.redirect('/urls');
 });
 app.get('/login', (req, res) => {
   //call templateVars as a parameter, because it is needed by the header
