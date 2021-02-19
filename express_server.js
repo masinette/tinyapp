@@ -155,7 +155,7 @@ app.post("/urls", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
-//SHORTURL/ID
+// ID/ SHORTURL
 app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   const templateVars = { shortURL: shortURL, longURL: urlDatabase[shortURL].longURL, user: users[req.session["user_id"]] };
