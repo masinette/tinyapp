@@ -10,7 +10,7 @@ const getUserIdByEmail = function(users, emailAccount) {
   return confirmedUser;
 };
 
-const urlsForUser = function (database, id) {
+const urlsForUser = function(database, id) {
   const userURLDatabase = {};
   for (let key in database) {
     //target entries by user id
@@ -36,5 +36,17 @@ const confirmUserEmail = function(users, emailAccount) {
   return confirmedEmail;
 };
 
+//generate random string for key names
+const generateRandomString = function(lengthOfString) {
+  let characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  let randomAlphaNum = '';
+  let randomString = '';
 
-module.exports = { getUserIdByEmail, urlsForUser, confirmUserEmail };
+  for (let i = 0; i < lengthOfString; i++) {
+    randomAlphaNum = (characters[(Math.floor(Math.random() * characters.length))]);
+    randomString += randomAlphaNum;
+  }
+  return randomString;
+};
+
+module.exports = { getUserIdByEmail, urlsForUser, confirmUserEmail, generateRandomString };

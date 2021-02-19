@@ -1,11 +1,10 @@
 const express = require("express");
 const cookieSession = require('cookie-session');
-// const cookieParser = require('cookie-parser');
 const app = express();
 const PORT = 8080; // default port 8080
 const bodyParser = require("body-parser");
 const bcrypt = require('bcrypt');
-const { getUserIdByEmail, urlsForUser, confirmUserEmail } = require('./helpers');
+const { getUserIdByEmail, urlsForUser, confirmUserEmail, generateRandomString } = require('./helpers');
 
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -15,12 +14,11 @@ app.use(cookieSession({
 }));
 
 
-// "DATABASES"
+//------------------------------  "DATABASES"  -------------------------------------------//
 const urlDatabase = {
   "b2xVn2": { longURL: "http://www.lighthouselabs.ca", userID: "randomUserID1" },
   "9sm5xK": { longURL: "http://www.google.com", userID: "randomUserID2" }
 };
-
 const users = {
   "randomUserID1": {
     id: "randomUserID1",
@@ -34,32 +32,19 @@ const users = {
   }
 };
 
-//generate random string for urlDatabase key names
-const numsAndLetters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-function generateRandomString(lengthOfString, characters) {
-  let randomAlphaNum = '';
-  let randomString = '';
 
-  for (let i = 0; i < lengthOfString; i++) {
-    randomAlphaNum = (characters[(Math.floor(Math.random() * characters.length))]);
-    randomString += randomAlphaNum;
-  };
-  // console.log(randomString);
-  return randomString;
-};
-
+//-------------------------------   ROUTES   ----------------------------------------------//
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
-
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
-
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
+//LOGIN AND LOGOUT
 app.post('/login', (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
@@ -77,31 +62,28 @@ app.post('/login', (req, res) => {
     }
     //if email cannot be found return response of 403 status code
   } else {
-    res.status(403).send("Error 403: email is not registered");
+    res.status(403).send("Error 403: please enter registered email");
   }
 
   res.redirect('/urls');
 });
-
 app.post('/logout', (req, res) => {
   //USER LOGOUT, then redirect to login
   req.session["user_id"] = null;
   res.redirect('/login');
 });
-
 app.get('/login', (req, res) => {
   //call templateVars as a parameter, because it is needed by the header
   const templateVars = { user: users[req.session["user_id"]] };
   res.render('urls_login', templateVars);
 });
 
+//REGISTRATION
 app.get('/register', (req, res) => {
   //call templateVars as a parameter, because it is needed by the header
   const templateVars = { user: users[req.session["user_id"]] };
   res.render('urls_registration', templateVars);
 });
-
-
 app.post('/register', (req, res) => {
   //get values for user id, email, password
   const email = req.body.email;
@@ -116,7 +98,7 @@ app.post('/register', (req, res) => {
     res.status(400).send("Error: email is taken");
   }
   //generate random id for user
-  const id = generateRandomString(6, numsAndLetters);
+  const id = generateRandomString(6);
 
   //add user object to global 'user' object
   users[id] = { id, email, hashedPassword };
@@ -128,6 +110,20 @@ app.post('/register', (req, res) => {
 });
 
 
+//URLS, INDEX
+app.get("/urls/new", (req, res) => {
+  //render the form page
+  const templateVars = { user: users[req.session["user_id"]] };
+
+  //If someone is not logged in when trying to access /urls/new,
+  //redirect them to the login page.
+  if (req.session["user_id"]) {
+    res.render("urls_new", templateVars);
+  } else {
+    res.redirect("/login");
+  }
+
+});
 app.get("/urls", (req, res) => {
   /*
   Lookup the user object in the users object using the user_id cookie value
@@ -146,21 +142,16 @@ app.get("/urls", (req, res) => {
     res.send("Please register (or login) first");
   }
 });
-
-//render the form page
-app.get("/urls/new", (req, res) => {
-  const templateVars = { user: users[req.session["user_id"]] };
-
-  //If someone is not logged in when trying to access /urls/new,
-  //redirect them to the login page.
-  if (req.session["user_id"]) {
-    res.render("urls_new", templateVars);
-  } else {
-    res.redirect("/login");
-  }
-
+app.post("/urls", (req, res) => {
+  const shortURL = generateRandomString(6);
+  urlDatabase[shortURL] = { longURL: req.body.longURL, userID: req.session["user_id"] };
+  
+  const longURL = urlDatabase[shortURL].longURL;
+  const templateVars = { urls: urlDatabase, shortURL: shortURL, longURL: longURL, user: users[req.session["user_id"]] };
+  res.render("urls_show", templateVars);
 });
 
+//SHORTURL
 app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   const templateVars = { shortURL: shortURL, longURL: urlDatabase[shortURL].longURL, user: users[req.session["user_id"]] };
@@ -172,17 +163,6 @@ app.get("/urls/:shortURL", (req, res) => {
     res.send("Please register (or login) to see your list");
   }
 });
-
-//match the POST request on urls_new and handle it,
-app.post("/urls", (req, res) => {
-  const shortURL = generateRandomString(6, numsAndLetters);
-  urlDatabase[shortURL] = { longURL: req.body.longURL, userID: req.session["user_id"] };
-
-  const longURL = urlDatabase[shortURL].longURL;
-  const templateVars = { urls: urlDatabase, shortURL: shortURL, longURL: longURL, user: users[req.session["user_id"]] };
-  res.render("urls_show", templateVars);
-});
-
 app.get("/u/:shortURL", (req, res) => {
   //redirect to long url
   //get shortURL from request parameters
@@ -190,7 +170,6 @@ app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[shortURL].longURL;
   res.redirect(longURL);
 });
-
 app.post('/urls/:shortURL/delete', (req, res) => {
   //when user pushes delete button (wrapped in POST form), pass in the id(shortURL),
   //find that key name in the urlDatabase, and delete it. Afterward, redirect to urls
@@ -204,7 +183,6 @@ app.post('/urls/:shortURL/delete', (req, res) => {
   }
   res.redirect('/urls');
 });
-
 app.post('/urls/:shortURL', (req, res) => {
   //update URL resource in urlDatabase, when update button is pushed on urls_show,
   //get the current shortURL
@@ -220,7 +198,8 @@ app.post('/urls/:shortURL', (req, res) => {
   res.redirect('/urls');
 });
 
-//have the server listen for incoming requests
+//SERVER INITIATION
 app.listen(PORT, () => {
+  //have the server listen for incoming requests
   console.log(`Example app listening on port ${PORT}!`);
 });
