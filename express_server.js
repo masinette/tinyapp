@@ -35,7 +35,11 @@ const users = {
 
 //-------------------------------   ROUTES   ----------------------------------------------//
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  if (req.session["user_id"]) {
+    res.redirect('/urls');
+  } else {
+    res.redirect('/login');
+  }
 });
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
@@ -151,7 +155,7 @@ app.post("/urls", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
-//SHORTURL
+//SHORTURL/ID
 app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   const templateVars = { shortURL: shortURL, longURL: urlDatabase[shortURL].longURL, user: users[req.session["user_id"]] };
