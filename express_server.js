@@ -35,9 +35,11 @@ const users = {
 
 //-------------------------------   ROUTES   ----------------------------------------------//
 app.get("/", (req, res) => {
+  //if user is logged in, redirect to urls page
   if (req.session["user_id"]) {
     res.redirect('/urls');
   } else {
+    //if user is not logged in, redirect to login page
     res.redirect('/login');
   }
 });
@@ -45,6 +47,7 @@ app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 app.get("/hello", (req, res) => {
+  //tester page, fun little message for whomever is looking
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
@@ -52,33 +55,35 @@ app.get("/hello", (req, res) => {
 app.post('/login', (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-
+  //validate user inputted email against users database
   let confirmedEmail = (confirmUserEmail(users, email));
-
   const id = getUserIdByEmail(users, email);
 
+  //if email is in database, compare hashed password
   if (confirmedEmail) {
     if (bcrypt.compareSync(password, users[id].hashedPassword)) {
+      //if passwords match, create cookie for user
       req.session["user_id"] = id;
     } else {
-      //if email matches but password doesnt, 403
+      //if email matches but password doesn't, 403 status code
       res.status(403).send("Error 403: password is incorrect");
     }
     //if email cannot be found return response of 403 status code
   } else {
     res.status(403).send("Error 403: please enter registered email");
   }
-
+  //redirect user to urls main page, once logged in
   res.redirect('/urls');
 });
 app.post('/logout', (req, res) => {
-  //USER LOGOUT, then redirect to urls
+  //USER LOGOUT, clear cookie, then redirect to urls
   req.session["user_id"] = null;
   res.redirect('/urls');
 });
 app.get('/login', (req, res) => {
   //call templateVars as a parameter, because it is needed by the header
   const templateVars = { user: users[req.session["user_id"]] };
+  //render login form page
   res.render('urls_login', templateVars);
 });
 
@@ -86,6 +91,7 @@ app.get('/login', (req, res) => {
 app.get('/register', (req, res) => {
   //call templateVars as a parameter, because it is needed by the header
   const templateVars = { user: users[req.session["user_id"]] };
+  //render registration form page
   res.render('urls_registration', templateVars);
 });
 app.post('/register', (req, res) => {
@@ -94,17 +100,18 @@ app.post('/register', (req, res) => {
   const password = req.body.password;
   const hashedPassword = bcrypt.hashSync(password, 10);
 
+  //if password or email are blank, send error message
   if (email === "" || password === "") {
     res.status(400).send("Error: email/password can't be blank");
   }
-
+  //if email is already in database, send error message
   if (email === confirmUserEmail(users, email)) {
     res.status(400).send("Error: email is taken");
   }
   //generate random id for user
   const id = generateRandomString(6);
 
-  //add user object to global 'user' object
+  //add user object to global 'users' object
   users[id] = { id, email, hashedPassword };
 
   //set a user_id cookie with the randomly generated user id
@@ -116,14 +123,13 @@ app.post('/register', (req, res) => {
 
 //URLS, INDEX
 app.get("/urls/new", (req, res) => {
-  //render the form page
   const templateVars = { user: users[req.session["user_id"]] };
-
-  //If someone is not logged in when trying to access /urls/new,
-  //redirect them to the login page.
+  //if user logged in render urls_new page
   if (req.session["user_id"]) {
     res.render("urls_new", templateVars);
   } else {
+    //If someone is not logged in when trying to access /urls/new,
+    //redirect them to the login page.
     res.redirect("/login");
   }
 
@@ -131,7 +137,7 @@ app.get("/urls/new", (req, res) => {
 app.get("/urls", (req, res) => {
   /*
   Lookup the user object in the users object using the user_id cookie value
-  Pass this user object to your templates via templateVars.
+  Pass this user object to templates via templateVars.
   Update the _header partial to show the email value from the user object instead of the username.
   */
   const userId = req.session["user_id"];
@@ -143,15 +149,17 @@ app.get("/urls", (req, res) => {
   if (req.session["user_id"]) {
     res.render("urls_index", templateVars);
   } else {
+    //if user isn't logged in, send message to tell them to login
     res.send("Please register (or login) first");
   }
 });
 app.post("/urls", (req, res) => {
+  //genertae random id/shorturl
   const shortURL = generateRandomString(6);
   urlDatabase[shortURL] = { longURL: req.body.longURL, userID: req.session["user_id"] };
-  
   const longURL = urlDatabase[shortURL].longURL;
   const templateVars = { urls: urlDatabase, shortURL: shortURL, longURL: longURL, user: users[req.session["user_id"]] };
+  //render urls_show page
   res.render("urls_show", templateVars);
 });
 
@@ -161,9 +169,11 @@ app.get("/urls/:shortURL", (req, res) => {
   const templateVars = { shortURL: shortURL, longURL: urlDatabase[shortURL].longURL, user: users[req.session["user_id"]] };
   const id = req.session["user_id"];
 
+  //if current user_id is in database, render user specific urls_show page with their own urls list
   if (id && (urlDatabase[shortURL].userID === id)) {
     res.render("urls_show", templateVars);
   } else {
+    //if user is not logged in, or not in database, send error message
     res.send("Please register (or login) to see your list");
   }
 });
@@ -172,6 +182,7 @@ app.get("/u/:shortURL", (req, res) => {
   //get shortURL from request parameters
   const shortURL = req.params.shortURL;
   const longURL = urlDatabase[shortURL].longURL;
+  //render longURL webpage
   res.redirect(longURL);
 });
 app.post('/urls/:shortURL/delete', (req, res) => {
